@@ -1,17 +1,22 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class PADSolver {
+   /**
+    * variable stubs - we will extend for extra calculations 
+    */
    private static double SINGLE_ADD = 0.25;
    private static double COMBO_MULT = 0.25;
+   
    private static int X;
    private static int Y;
    private Orb[][] mArr;
    //map that includes path and starting position
    //use regex to extract String directions
-   private HashMap<Orb[][], String> map;
+   private HashMap<ArrayList<ArrayList<Orb>>, String> map;
    /**
     * 
     * @param array
@@ -34,10 +39,33 @@ public class PADSolver {
       mArr = array;
    }
    /**
-    * driver method stub
+    * driver method 
     */
-   public void findSolutions(){
-      
+   public void findSolutions(int numOfMoves){
+      int maxCombos = 0;
+      ArrayList<ArrayList<Orb>> maxSequence = null;
+      for(int i = 0; i < Y; i++)
+         for(int j = 0; j < X; j++)
+            //populates hashmap
+            findPath(i, j, new Orb[Y][X], numOfMoves, (Orb)mArr[i][j].clone(), "X " + i + "Y " + j + "|");
+      for (Map.Entry<ArrayList<ArrayList<Orb>>, String> entry : map.entrySet()) { 
+         //loops through each possibility w/ minimal moves
+         Orb[][] sequence = mergeArrs(populateArray(entry.getKey()));
+         int combos = 0;
+         while(true){
+             combos += countCombos(sequence); //gives blank map to fill in
+             if(!skyFall(sequence)) //means there are skyfalls
+                 break;
+         }
+         if(combos > maxCombos){
+            maxSequence = entry.getKey();
+            maxCombos = combos;
+         }
+      }
+      /**
+       * stub needs modification - gives simple result for now
+       */
+      System.out.println("The best result is : " + map.get(maxSequence));
    }
    
    /**
@@ -70,8 +98,81 @@ public class PADSolver {
      ArrayList<ArrayList<Orb>> list = populateList(arr);
      //There already is an arraylist w/ same directions but longer length - we override
      if(map.get(list).length() > dir.length())
-        map.put(arr, dir);
-     
+        map.put(list, dir);
+   }
+   
+   public Orb[][] mergeArrs(Orb[][] arr){
+      Orb[][] newArr = new Orb[Y][X];
+      for(int i = 0; i < 30; i++){
+          Orb mo = mArr[i/5][i%6];
+          Orb o = arr[i/5][i%6];
+          if(o == null)
+              newArr[i/5][i%6] = mo;
+          else
+              newArr[i/5][i%6] = o;
+      }
+      return newArr;
+   }
+   
+   /**
+    * precondition: array has all cells complete
+    * @return
+    */
+   public int countCombos(Orb[][] arr){
+      int combos = 0;
+      for(int i = 0; i < Y; i++)
+         for(int z = 0; z < X; z++){
+            Orb o = arr[i][z];
+            int horCount = 0;
+            int verCount = 0;
+            
+            //scan down
+            for(int j = 1; o.color == arr[i][z + j].color; j++) horCount++;
+            //scan up
+            for(int j = -1; o.color == arr[i][z + j].color; j--) horCount++;
+            for(int j = 1; o.color == arr[i + j][z].color; j++) verCount++;
+            for(int j = -1; o.color == arr[i + j][z].color; j--) verCount++;
+            
+            if(Math.max(horCount, verCount) > 2){
+                combos++; //is combo?
+                removeComboFromBoard(i, z, arr);
+            }
+         }
+      return combos;
+   }
+   public void removeComboFromBoard(int x, int y, Orb[][] arr){
+      arr[y][x] = null;
+      if(x < X)
+          removeComboFromBoard(++x,y,arr);
+      if(x > 0)
+          removeComboFromBoard(--x,y,arr);
+      if(y < Y)
+          removeComboFromBoard(x, ++y, arr);
+      if(y > 0)
+          removeComboFromBoard(x, --y, arr);
+   }
+   public boolean skyFall(Orb[][] arr){
+      boolean flag = false;
+      int rowU, rowD, counterD;
+      //Y-2 because there are no gaps beneath
+      for(int i = Y-2; i >= 0; i--){
+         for(int j = X-1; j >= 0; j++){
+             Orb orb = arr[i][j];
+             rowU = rowD = i;
+             counterD = 0;
+      
+             if(arr[rowD+1][i%6] == null){//there's a gap
+                 flag = true;//there are skyfalls
+                 while(arr[++rowD][i%6] == null)
+                //swap all down (there should be nothing on top of a gap on top)
+                while(rowU != 0 && arr[rowU][i%6] != null){
+                    swap(arr[rowU][i%6], arr[rowU + counterD][i%6]);
+                    rowU--;
+                }
+             }
+         }
+      }
+      return flag;
    }
    public static ArrayList<ArrayList<Orb>> populateList(Orb[][] arr){
       ArrayList<ArrayList<Orb>> list = new ArrayList<ArrayList<Orb>>();
@@ -79,6 +180,13 @@ public class PADSolver {
          for(int j = 0; j < X; j++)
             list.get(i).set(j, arr[i][j]);
       return list;
+   }
+   public static Orb[][] populateArray(ArrayList<ArrayList<Orb>> list){
+      Orb[][] arr = new Orb[Y][X];
+      for(int i = 0; i < Y; i++)
+         for(int j = 0; j < X; j++)
+            arr[j][i] = list.get(i).get(j);
+      return arr;
    }
    public static void swap(Orb o1, Orb o2){
       if(o1 == null){
