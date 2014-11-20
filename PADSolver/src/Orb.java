@@ -16,6 +16,29 @@ public class Orb implements Cloneable{
    }
    
    public Object clone(){
-      return (Object)this.clone();
+      try {
+         return (Object)super.clone();
+      } catch (CloneNotSupportedException e) {
+         e.printStackTrace();
+      }
+      return null;
+   }
+   
+   public String toString(){
+      if(color == 0)
+         return "R";
+      if(color == 1)
+         return "G";
+      if(color == 2)
+         return "B";
+      if(color == 3)
+         return "L";
+      if(color == 4)
+         return "D";
+      if(color == 5)
+         return "P";
+      if(color == 6)
+         return "X";
+      return "Not initialized with a color";
    }
 }
