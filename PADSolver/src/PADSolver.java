@@ -32,8 +32,8 @@ public class PADSolver {
       for (int i = 0; i < Y; i++)
          for (int j = 0; j < X; j++)
             // Will run into null pointers in the future
-            /*if (array[i][j] == null)
-               throw new IllegalArgumentException();*/
+            if (array[i][j] == null)
+               throw new IllegalArgumentException();
       mArr = array;
       map = new HashMap<ArrayList<ArrayList<Orb>>, String>();
    }
@@ -47,26 +47,20 @@ public class PADSolver {
       for (int i = 0; i < Y; i++)
          for (int j = 0; j < X; j++)
             // populates hashmap
-            findPath(j, i, new Orb[Y][X], numOfMoves, (Orb) mArr[i][j].clone(),
-                  "X " + i + "Y " + j + "|");
+            findPath(j, i, new Orb[Y][X], numOfMoves, j, i,
+                  "Y " + i + "X " + j + "|");
       for (Map.Entry<ArrayList<ArrayList<Orb>>, String> entry : map.entrySet()) {
          // loops through each possibility w/ minimal moves
          Orb[][] sequence = mergeArrs(populateArray(entry.getKey()));
          int combos = 0;
-         for(int i = 0; i < Y; i ++){
-            for(int j = 0; j < X; j ++)
-               System.out.print(sequence[i][j]);
-            System.out.println();
-         }
-         System.out.println(sequence);
+
          while (true) {
             combos += countCombos(sequence); // gives blank map to fill in
             if (!skyFall(sequence)) // means there are skyfalls
                break;
-            System.out.println("counting");
          }
          if (combos > maxCombos) {
-            System.out.println("Hey there was something that beat it!");
+            System.out.println("Found big combo : " + combos);
             maxSequence = entry.getKey();
             maxCombos = combos;
          }
@@ -86,23 +80,22 @@ public class PADSolver {
       if (counter == 0){
          return;
       }
-
-      // advance orb positions - remember to clone, not modify initial instance
-      Orb next = arr[y][x] = (arr[y][x] != null) ? arr[y][x] : (Orb) mArr[y][x].clone();
-
-      Orb temp = next;
-      swap(prevY, prevX, y, x, arr);
-      prev = temp;
+      
+      arr[y][x] = (arr[y][x] != null) ? arr[y][x] : (Orb) mArr[y][x].clone();
+      int nextY = y, nextX = x;
+      swap(nextY, nextX, prevY, prevX, arr);
+      prevY = nextY;
+      prevX = nextX;
 
       counter--;
       if (y > 0) // can go up
-         findPath(x, y - 1, arr, counter, prev, dir + "U");
+         findPath(x, y - 1, arr, counter, prevX, prevY , dir + "U");
       if (x > 0) // can go left
-         findPath(x - 1, y, arr, counter, prev, dir + "L");
+         findPath(x - 1, y, arr, counter, prevX, prevY, dir + "L");
       if (y < Y-1)
-         findPath(x, y + 1, arr, counter, prev, dir + "D");
+         findPath(x, y + 1, arr, counter, prevX, prevY, dir + "D");
       if (x < X-1)
-         findPath(x + 1, y, arr, counter, prev, dir + "R");
+         findPath(x + 1, y, arr, counter, prevX, prevY, dir + "R");
       /*
        * There is a problem in using arrays as hashmaps each array's address is
        * different, so we must put the array in a wrapper class - a kind of
@@ -161,14 +154,14 @@ public class PADSolver {
 
             if (Math.max(horCount, verCount) > 2) {
                combos++; // is combo?
-               System.out.println("Found a combo!");
+               System.out.println("Found a combo! With color " + o.color + " At: " + i + ", " + z);
+               removeComboFromBoard(z, i, arr, o.color);
+               System.out.println("After removing: ");
                for(int a = 0; a < Y; a++){
-                  for(int b = 0; b < X; b++){
+                  for(int b = 0; b < X; b++)
                      System.out.print(arr[a][b]);
-                  }
                   System.out.println();
                }
-               removeComboFromBoard(i, z, arr, o.color);
             }
          }
       return combos;
@@ -181,16 +174,14 @@ public class PADSolver {
     * @param orig, only for its color
     */
    public void removeComboFromBoard(int x, int y, Orb[][] arr, int color) {
-      try{
-         if(arr[y][x] != null && color == arr[y][x].color)
-            arr[y][x] = null;
-         else
-            return;
+      if((y > Y-1 || y < 0) || (x > X-1 || x < 0)){
+         return;
       }
-      catch(Exception e){
-         System.out.println(" x is " + x + " y is " + y);
-         e.printStackTrace();
+      if(arr[y][x] != null && color == arr[y][x].color){
+         arr[y][x] = null;
       }
+      else
+         return;
       if (x < (X-2))
          removeComboFromBoard(x+1, y, arr, color);
       if (x > 0)
@@ -203,24 +194,33 @@ public class PADSolver {
 
    public boolean skyFall(Orb[][] arr) {
       boolean flag = false;
-      int rowU, rowD, counterD;
+      int rowU, rowD;
       // Y-2 because there are no gaps beneath
       for (int i = Y - 2; i >= 0; i--) {
          for (int j = X - 1; j >= 0; j--) {
             Orb orb = arr[i][j];
             rowU = rowD = i;
-            counterD = 0;
-
+            if(orb == null)
+               continue;
+            
             if (arr[rowD + 1][j] == null) {// there's a gap
+               //checks to see if the entire row is empty
+               if(isRowEmpty(j, arr))
+                  continue;
                flag = true;// there are skyfalls
-               while (rowD+1 < Y && arr[++rowD][j] == null); //only for incrementing RowD until it reaches the end
-               System.out.println("Swapping " + arr[rowD][j] + " with " + arr[i][j]);
+               rowD++;
                swap(i, j, rowD, j, arr);
-               System.out.println("Swapped " + arr[rowD][j] + " with " + arr[i][j]);
             }
          }
       }
       return flag;
+   }
+   
+   public static boolean isRowEmpty(int x, Orb[][] arr){
+      for(int check = 0; check < Y; check++)
+         if(arr[check][x] != null)
+            return false;
+      return true;
    }
 
    public static ArrayList<ArrayList<Orb>> populateList(Orb[][] arr) {
