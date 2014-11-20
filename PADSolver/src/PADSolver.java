@@ -32,8 +32,8 @@ public class PADSolver {
       for (int i = 0; i < Y; i++)
          for (int j = 0; j < X; j++)
             // Will run into null pointers in the future
-            if (array[i][j] == null)
-               throw new IllegalArgumentException();
+            /*if (array[i][j] == null)
+               throw new IllegalArgumentException();*/
       mArr = array;
       map = new HashMap<ArrayList<ArrayList<Orb>>, String>();
    }
@@ -63,6 +63,7 @@ public class PADSolver {
             combos += countCombos(sequence); // gives blank map to fill in
             if (!skyFall(sequence)) // means there are skyfalls
                break;
+            System.out.println("counting");
          }
          if (combos > maxCombos) {
             System.out.println("Hey there was something that beat it!");
@@ -79,24 +80,18 @@ public class PADSolver {
    /**
     * recursively populating using heuristics and path finding
     */
-   public void findPath(int x, int y, Orb[][] arr, int counter, Orb prev,
+   public void findPath(int x, int y, Orb[][] arr, int counter, int prevX, int prevY,
          String dir) {
       // end of operations if last turn (base case)
       if (counter == 0){
-         System.out.println("this recursion leaf died");
          return;
       }
 
       // advance orb positions - remember to clone, not modify initial instance
-//      try{
-         Orb next = arr[y][x] = (arr[y][x] != null) ? arr[y][x] : (Orb) mArr[y][x].clone();
-//      }
-//      catch(Exception e){
-//         System.out.println("Current ")
-//         e.printStackTrace();
-//      }
+      Orb next = arr[y][x] = (arr[y][x] != null) ? arr[y][x] : (Orb) mArr[y][x].clone();
+
       Orb temp = next;
-      swap(next, prev);
+      swap(prevY, prevX, y, x, arr);
       prev = temp;
 
       counter--;
@@ -149,37 +144,61 @@ public class PADSolver {
             Orb o = arr[i][z];
             int horCount = 0;
             int verCount = 0;
-
-            // scan down
             
-            for (int j = 1; o.color == arr[i][z + j].color; j++)
+            if(o == null)
+               continue;
+            
+            // scan right
+            for (int j = 1; ((z+j) < X && arr[i][z+j] != null) && o.color == arr[i][z + j].color; j++)
                horCount++;
-            // scan up
-            for (int j = -1; o.color == arr[i][z + j].color; j--)
+            // scan left
+            for (int j = -1; ((z+j) >= 0 && arr[i][z+j] != null) && o.color == arr[i][z + j].color; j--)
                horCount++;
-            for (int j = 1; o.color == arr[i + j][z].color; j++)
+            for (int j = 1; ((i+j) < Y && arr[i+j][z] != null) && o.color == arr[i + j][z].color; j++)
                verCount++;
-            for (int j = -1; o.color == arr[i + j][z].color; j--)
+            for (int j = -1; ((i+j) >= 0 && arr[i+j][z] != null) && o.color == arr[i + j][z].color; j--)
                verCount++;
 
             if (Math.max(horCount, verCount) > 2) {
                combos++; // is combo?
-               removeComboFromBoard(i, z, arr);
+               System.out.println("Found a combo!");
+               for(int a = 0; a < Y; a++){
+                  for(int b = 0; b < X; b++){
+                     System.out.print(arr[a][b]);
+                  }
+                  System.out.println();
+               }
+               removeComboFromBoard(i, z, arr, o.color);
             }
          }
       return combos;
    }
 
-   public void removeComboFromBoard(int x, int y, Orb[][] arr) {
-      arr[y][x] = null;
-      if (x < X)
-         removeComboFromBoard(++x, y, arr);
+   /**
+    * precondition: array has no nulls
+    * @param x, y coordinates
+    * @param arr, array that is being referenced
+    * @param orig, only for its color
+    */
+   public void removeComboFromBoard(int x, int y, Orb[][] arr, int color) {
+      try{
+         if(arr[y][x] != null && color == arr[y][x].color)
+            arr[y][x] = null;
+         else
+            return;
+      }
+      catch(Exception e){
+         System.out.println(" x is " + x + " y is " + y);
+         e.printStackTrace();
+      }
+      if (x < (X-2))
+         removeComboFromBoard(x+1, y, arr, color);
       if (x > 0)
-         removeComboFromBoard(--x, y, arr);
-      if (y < Y)
-         removeComboFromBoard(x, ++y, arr);
+         removeComboFromBoard(x-1, y, arr, color);
+      if (y < (Y-2))
+         removeComboFromBoard(x, y+1, arr, color);
       if (y > 0)
-         removeComboFromBoard(x, --y, arr);
+         removeComboFromBoard(x, y-1, arr, color);
    }
 
    public boolean skyFall(Orb[][] arr) {
@@ -187,20 +206,17 @@ public class PADSolver {
       int rowU, rowD, counterD;
       // Y-2 because there are no gaps beneath
       for (int i = Y - 2; i >= 0; i--) {
-         for (int j = X - 1; j >= 0; j++) {
+         for (int j = X - 1; j >= 0; j--) {
             Orb orb = arr[i][j];
             rowU = rowD = i;
             counterD = 0;
 
-            if (arr[rowD + 1][i % 6] == null) {// there's a gap
+            if (arr[rowD + 1][j] == null) {// there's a gap
                flag = true;// there are skyfalls
-               while (arr[++rowD][i % 6] == null)
-                  // swap all down (there should be nothing on top of a gap on
-                  // top)
-                  while (rowU != 0 && arr[rowU][i % 6] != null) {
-                     swap(arr[rowU][i % 6], arr[rowU + counterD][i % 6]);
-                     rowU--;
-                  }
+               while (rowD+1 < Y && arr[++rowD][j] == null); //only for incrementing RowD until it reaches the end
+               System.out.println("Swapping " + arr[rowD][j] + " with " + arr[i][j]);
+               swap(i, j, rowD, j, arr);
+               System.out.println("Swapped " + arr[rowD][j] + " with " + arr[i][j]);
             }
          }
       }
@@ -225,20 +241,11 @@ public class PADSolver {
       return arr;
    }
 
-   public static void swap(Orb o1, Orb o2) {
-      if (o1 == null) {
-         o1 = o2;
-         o2 = null;
-         return;
-      }
-      if (o2 == null) {
-         o2 = o1;
-         o1 = null;
-         return;
-      }
-      // just swapping colors
-      int temp = o1.color;
-      o1.color = o2.color;
-      o2.color = temp;
+   public static void swap(int y1, int x1, int y2, int x2, Orb[][] arr) {
+      Orb temp, o1, o2;
+      temp = o1 = arr[y1][x1];
+      o2 = arr[y2][x2];
+      arr[y1][x1] = o2;
+      arr[y2][x2] = temp;
    }
 }

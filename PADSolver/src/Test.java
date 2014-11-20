@@ -4,7 +4,7 @@ public class Test {
       Orb[][] arr = new Orb[5][6];
       int x = 6;
       int y = 5;
-      for(int i = 0; i < y ; i++){
+      for(int i = 0; i < y-1 ; i++){
          for(int j = 0; j < x; j++){
             int num = (int) (Math.random()*5);
             Orb orb = new Orb(num);
@@ -17,7 +17,15 @@ public class Test {
          System.out.println();
       }
       PADSolver padsolver = new PADSolver(arr, x, y);
-      padsolver.findSolutions(5);
+      //padsolver.findSolutions(5);
+      while(padsolver.skyFall(arr)){ System.out.println("skyfall applied");
+         for(int i = 0; i < y; i++){
+            for(int j = 0; j < x; j++){
+               System.out.print(arr[i][j]);
+            }
+            System.out.println();
+         }
+      }
    }
    
 }
