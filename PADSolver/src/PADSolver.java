@@ -1,6 +1,5 @@
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class PADSolver {
@@ -27,8 +26,8 @@ public class PADSolver {
     * @param y
     */
    public PADSolver(Orb[][] array, int x, int y) {
-      X = x;
-      Y = y;
+      X = x; //Width
+      Y = y; //Height
       for (int i = 0; i < Y; i++)
          for (int j = 0; j < X; j++)
             // Will run into null pointers in the future
