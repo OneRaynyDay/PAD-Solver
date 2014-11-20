@@ -11,6 +11,7 @@ public class Orb implements Cloneable{
    public final static int X = 6;
    public int color;
    
+   //c = R,G,B,L(ight),D(ark)
    public Orb(int c){
       color = c;
    }
@@ -24,6 +25,7 @@ public class Orb implements Cloneable{
       return null;
    }
    
+   //Prints colors of the orbs
    public String toString(){
       if(color == 0)
          return "R";
