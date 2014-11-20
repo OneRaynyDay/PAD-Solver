@@ -9,10 +9,12 @@ public class Orb implements Cloneable{
    public final static int P = 5;
    //blocker orb
    public final static int X = 6;
+   public boolean delete;
    public int color;
    
    public Orb(int c){
       color = c;
+      delete = false;
    }
    
    public Object clone(){

@@ -132,13 +132,13 @@ public class PADSolver {
     */
    public int countCombos(Orb[][] arr) {
       int combos = 0;
-      for (int i = 0; i < Y; i++)
+      for (int i = 0; i < Y; i++) {
          for (int z = 0; z < X; z++) {
             Orb o = arr[i][z];
             int horCount = 0;
             int verCount = 0;
             
-            if(o == null)
+            if(o == null || o.delete)
                continue;
             
             // scan right
@@ -156,14 +156,18 @@ public class PADSolver {
                combos++; // is combo?
                System.out.println("Found a combo! With color " + o.color + " At: " + i + ", " + z);
                removeComboFromBoard(z, i, arr, o.color);
-               System.out.println("After removing: ");
-               for(int a = 0; a < Y; a++){
-                  for(int b = 0; b < X; b++)
-                     System.out.print(arr[a][b]);
-                  System.out.println();
-               }
             }
+            System.out.println("x = " + z);
          }
+         System.out.println("y = " + i);
+      }
+      wipeCombosFromBoard(arr);
+      System.out.println("After removing: ");
+      for(int a = 0; a < Y; a++){
+         for(int b = 0; b < X; b++)
+            System.out.print(arr[a][b]);
+         System.out.println();
+      }
       return combos;
    }
 
@@ -177,19 +181,46 @@ public class PADSolver {
       if((y > Y-1 || y < 0) || (x > X-1 || x < 0)){
          return;
       }
+      
       if(arr[y][x] != null && color == arr[y][x].color){
-         arr[y][x] = null;
+         arr[y][x].delete = true;
       }
       else
          return;
-      if (x < (X-2))
-         removeComboFromBoard(x+1, y, arr, color);
-      if (x > 0)
-         removeComboFromBoard(x-1, y, arr, color);
-      if (y < (Y-2))
-         removeComboFromBoard(x, y+1, arr, color);
-      if (y > 0)
-         removeComboFromBoard(x, y-1, arr, color);
+      
+      int horCount = 0;
+      int verCount = 0;
+      
+      for (int j = 1; ((x+j) < X && arr[y][x+j] != null) && color == arr[y][x + j].color; j++)
+         horCount++;
+      // scan left
+      for (int j = -1; ((x+j) >= 0 && arr[y][x+j] != null) && color == arr[y][x + j].color; j--)
+         horCount++;
+      for (int j = 1; ((y+j) < Y && arr[y+j][x] != null) && color == arr[y + j][x].color; j++)
+         verCount++;
+      for (int j = -1; ((y+j) >= 0 && arr[y+j][x] != null) && color == arr[y + j][x].color; j--)
+         verCount++;
+      
+      if (horCount > 2) {
+         if (x < (X-2) && !arr[y][x+1].delete)
+            removeComboFromBoard(x+1, y, arr, color);
+         if (x > 0 && !arr[y][x-1].delete)
+            removeComboFromBoard(x-1, y, arr, color);
+      }
+      if(verCount > 2) {
+         if (y < (Y-2) && !arr[y+1][x].delete)
+            removeComboFromBoard(x, y+1, arr, color);
+         if (y > 0 && !arr[y-1][x].delete)
+            removeComboFromBoard(x, y-1, arr, color);
+      }
+      
+   }
+   
+   public void wipeCombosFromBoard(Orb[][] arr){
+      for(int j = 0; j < Y; j++)
+         for(int i = 0; i < X; i++)
+            if(arr[j][i].delete)
+               arr[j][i] = null;
    }
 
    public boolean skyFall(Orb[][] arr) {
