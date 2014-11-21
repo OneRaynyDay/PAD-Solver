@@ -3,7 +3,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -53,7 +52,7 @@ public class BoardFinder {
 		for(int i = 0; i < height-10; i+=10){
 			for(int j = 0; j < width-10; j+=10){
 				System.out.print(i+","+j+"|");
-				//Pixel pixel = new Pixel(img.getRGB(i,j));
+				Pixel pixel = new Pixel(img.getRGB(i,j));
 			}
 			System.out.println();
 		}
