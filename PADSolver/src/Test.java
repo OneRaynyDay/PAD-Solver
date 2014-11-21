@@ -6,9 +6,7 @@ public class Test {
       int y = 5;
       
       //Creates a randomly generated board
-      for(int i = 0; i < y-1 ; i++){
-         if(i == 3)
-            continue;
+      for(int i = 0; i < y ; i++){
          for(int j = 0; j < x; j++){
             int num = (int) (Math.random()*5);
             Orb orb = new Orb(num);
@@ -24,15 +22,15 @@ public class Test {
       
       PADSolver padsolver = new PADSolver(arr, x, y);
       //padsolver.findSolutions(5);
-      //System.out.println("\n" + padsolver.countCombos(arr));
-      padsolver.skyFall(arr);
+      System.out.println("\n" + padsolver.countCombos(arr));
+      /*padsolver.skyFall(arr);
       System.out.println("After");
       for(int i = 0; i < y; i++){
          for(int j = 0; j < x; j++)
             System.out.print(arr[i][j]);
          System.out.println();
       }
-      
+      */
    }
    
 }

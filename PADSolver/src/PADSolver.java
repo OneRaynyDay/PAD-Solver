@@ -216,7 +216,6 @@ public class PADSolver {
    }
    
    //run through the board the remove combos which have been marked for deletion
-   //run through the board the remove combos which have been marked for deletion
    public int wipeCombosFromBoard(Orb[][] arr){
       int combos = 0;
       for(int j = 0; j < Y; j++)
