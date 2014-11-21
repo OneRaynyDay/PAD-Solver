@@ -33,7 +33,7 @@ public class PADSolver {
             // Will run into null pointers in the future
             if (array[i][j] == null)
                //throw new IllegalArgumentException(); //comment out if need testing
-      mArr = array; //master array
+      mArr = array; //master array?
       map = new HashMap<ArrayList<ArrayList<Orb>>, String>();
    }
 
@@ -43,11 +43,13 @@ public class PADSolver {
    public void findSolutions(int numOfMoves) {
       int maxCombos = 0;
       ArrayList<ArrayList<Orb>> maxSequence = null;
-      for (int i = 0; i < Y; i++)
-         for (int j = 0; j < X; j++)
+      for (int i = 0; i < Y; i++){
+         for (int j = 0; j < X; j++){
             // populates hashmap
             findPath(j, i, new Orb[Y][X], numOfMoves, j, i,
                   "Y " + i + "X " + j + "|");
+         }
+      }
       for (Map.Entry<ArrayList<ArrayList<Orb>>, String> entry : map.entrySet()) {
          // loops through each possibility w/ minimal moves
          Orb[][] sequence = mergeArrs(populateArray(entry.getKey()));
@@ -97,7 +99,7 @@ public class PADSolver {
 
       counter--; //decrements the number of moves left
       if (y > 0) // can go up
-         findPath(x, y - 1, arr, counter, prevX, prevY , dir + "U");
+         findPath(x, y - 1, arr, counter, prevX, prevY, dir + "U");
       if (x > 0) // can go left
          findPath(x - 1, y, arr, counter, prevX, prevY, dir + "L");
       if (y < Y-1)
@@ -214,6 +216,7 @@ public class PADSolver {
    }
    
    //run through the board the remove combos which have been marked for deletion
+   //run through the board the remove combos which have been marked for deletion
    public int wipeCombosFromBoard(Orb[][] arr){
       int combos = 0;
       for(int j = 0; j < Y; j++)
@@ -270,7 +273,7 @@ public class PADSolver {
             return false;
       return true;
    }
-
+   //populates an arraylist of arraylists given a 2D array
    public static ArrayList<ArrayList<Orb>> populateList(Orb[][] arr) {
       ArrayList<ArrayList<Orb>> list = new ArrayList<ArrayList<Orb>>();
       for (int i = 0; i < Y; i++){
