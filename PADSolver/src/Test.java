@@ -21,12 +21,12 @@ public class Test {
             System.out.print(arr[i][j]);
          System.out.println();
       }
-      
+      System.out.println();
       PADSolver padsolver = new PADSolver(arr, x, y);
       //padsolver.findSolutions(5);
       //System.out.println("\n" + padsolver.countCombos(arr));
       padsolver.skyFall(arr);
-      System.out.println("After");
+      System.out.println("After:");
       for(int i = 0; i < y; i++){
          for(int j = 0; j < x; j++)
             System.out.print(arr[i][j]);
