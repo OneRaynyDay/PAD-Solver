@@ -17,6 +17,7 @@ public class BoardFinder {
 	private static int height;
 	private static int RES_DOWNSCALE = 2;
 	private static BufferedImage img;
+	private static Pixel [][] board;
 	
 	public static void main(String [] args) throws IOException{
 		createAndShowGUI();
@@ -28,13 +29,8 @@ public class BoardFinder {
 		JFrame frame = new JFrame("Screen Capture");
 		frame.setPreferredSize(new Dimension(width/RES_DOWNSCALE,height/RES_DOWNSCALE));
 		
-		for(int i = 0; i < height; i+=10){
-			for(int j = 0; j < width; j+=10){
-				Pixel pixel = new Pixel(img.getRGB(j,i));
-				System.out.print(pixel);
-			}
-			System.out.println();
-		}
+		parseImage();
+		
 		JPanel pane = new JPanel(){
 			protected void paintComponent(Graphics g){
 				//For some reason, panels are a couple pixels smaller than they should be
@@ -49,5 +45,23 @@ public class BoardFinder {
 		frame.add(pane);
 		frame.pack();
 		frame.setVisible(true);
+	}
+	public static void parseImage(){
+		//create pixels 
+		board = new Pixel[height/10][width/10]; //arbitrarily only checks every 10 pixels for testing
+
+		for(int i = 0; i < height-10; i+=10){
+			for(int j = 0; j < width-10; j+=10){
+				System.out.print(i+","+j+"|");
+				//Pixel pixel = new Pixel(img.getRGB(i,j));
+			}
+			System.out.println();
+		}
+		for(int k = 0; k < board.length;k++){
+			for(int l = 0; l < board[k].length;l++){
+				//System.out.print(board[k][l]);
+			}
+			//System.out.println();
+		}
 	}
 }
