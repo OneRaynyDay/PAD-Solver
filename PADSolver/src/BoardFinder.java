@@ -4,6 +4,7 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
@@ -15,7 +16,7 @@ public class BoardFinder {
 	private static int width;
 	private static int height;
 	private static int RES_DOWNSCALE = 2;
-	private static Image img;
+	private static BufferedImage img;
 	
 	public static void main(String [] args) throws IOException{
 		createAndShowGUI();
@@ -27,6 +28,13 @@ public class BoardFinder {
 		JFrame frame = new JFrame("Screen Capture");
 		frame.setPreferredSize(new Dimension(width/RES_DOWNSCALE,height/RES_DOWNSCALE));
 		
+		for(int i = 0; i < height; i+=10){
+			for(int j = 0; j < width; j+=10){
+				Pixel pixel = new Pixel(img.getRGB(j,i));
+				System.out.print(pixel);
+			}
+			System.out.println();
+		}
 		JPanel pane = new JPanel(){
 			protected void paintComponent(Graphics g){
 				//For some reason, panels are a couple pixels smaller than they should be
