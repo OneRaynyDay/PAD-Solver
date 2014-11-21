@@ -33,6 +33,7 @@ public class BoardFinder {
 				g.drawImage(img,0,0,getWidth(),getHeight(),null);
 				g.setColor(Color.RED);
 				Graphics2D g2 = (Graphics2D) g;
+				//Allows for more visibility in the grid
 			    g2.setStroke(new BasicStroke(5));
 				g.drawRect(0, 0, getWidth(), getHeight()/RES_DOWNSCALE);
 			}
