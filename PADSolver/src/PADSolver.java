@@ -32,8 +32,8 @@ public class PADSolver {
          for (int j = 0; j < X; j++)
             // Will run into null pointers in the future
             if (array[i][j] == null)
-               throw new IllegalArgumentException();
-      mArr = array;
+               //throw new IllegalArgumentException(); //comment out if need testing
+      mArr = array; //master array
       map = new HashMap<ArrayList<ArrayList<Orb>>, String>();
    }
 
@@ -52,12 +52,13 @@ public class PADSolver {
          // loops through each possibility w/ minimal moves
          Orb[][] sequence = mergeArrs(populateArray(entry.getKey()));
          int combos = 0;
-
-         while (true) {
+         System.out.println("new entry");
+         while (true) { //counts the number of combos 
             combos += countCombos(sequence); // gives blank map to fill in
             if (!skyFall(sequence)) // means there are skyfalls
                break;
          }
+         
          if (combos > maxCombos) {
             System.out.println("Found big combo : " + combos);
             maxSequence = entry.getKey();
@@ -72,6 +73,13 @@ public class PADSolver {
 
    /**
     * recursively populating using heuristics and path finding
+    * @param int x - current column position
+    * @param int y - current row position
+    * @param Orb [][] arr - current board
+    * @param int counter - number of moves remaining
+    * @param int prevX - previous column position
+    * @param int prevY - previous row position 
+    * @param String dir - keeps track of orb path
     */
    public void findPath(int x, int y, Orb[][] arr, int counter, int prevX, int prevY,
          String dir) {
@@ -80,13 +88,14 @@ public class PADSolver {
          return;
       }
       
+      //makes necessary changes to the board after each iteration
       arr[y][x] = (arr[y][x] != null) ? arr[y][x] : (Orb) mArr[y][x].clone();
       int nextY = y, nextX = x;
       swap(nextY, nextX, prevY, prevX, arr);
       prevY = nextY;
       prevX = nextX;
 
-      counter--;
+      counter--; //decrements the number of moves left
       if (y > 0) // can go up
          findPath(x, y - 1, arr, counter, prevX, prevY , dir + "U");
       if (x > 0) // can go left
@@ -108,7 +117,8 @@ public class PADSolver {
       if (map.get(list) != null && (map.get(list).length() > dir.length()))
          map.put(list, dir);
    }
-
+   
+   //updates the master array
    public Orb[][] mergeArrs(Orb[][] arr) {
       Orb[][] newArr = new Orb[Y][X];
       for (int i = 0; i < Y; i++) {
@@ -126,47 +136,28 @@ public class PADSolver {
 
    /**
     * precondition: array has all cells complete
-    * 
+    * @param Orb[][] arr - current board state to analyze for combos
     * @return
     */
    public int countCombos(Orb[][] arr) {
       int combos = 0;
-      for (int i = 0; i < Y; i++) {
-         for (int z = 0; z < X; z++) {
+      for (int i = 0; i < Y; i++) { //rows
+         for (int z = 0; z < X; z++) { //columns
             Orb o = arr[i][z];
-            int horCount = 0;
-            int verCount = 0;
             
             if(o == null || o.delete)
                continue;
-            
-            // scan right
-            for (int j = 1; ((z+j) < X && arr[i][z+j] != null) && o.color == arr[i][z + j].color; j++)
-               horCount++;
-            // scan left
-            for (int j = -1; ((z+j) >= 0 && arr[i][z+j] != null) && o.color == arr[i][z + j].color; j--)
-               horCount++;
-            for (int j = 1; ((i+j) < Y && arr[i+j][z] != null) && o.color == arr[i + j][z].color; j++)
-               verCount++;
-            for (int j = -1; ((i+j) >= 0 && arr[i+j][z] != null) && o.color == arr[i + j][z].color; j--)
-               verCount++;
-
-            if (Math.max(horCount, verCount) > 2) {
-               combos++; // is combo?
-               System.out.println("Found a combo! With color " + o.color + " At: " + i + ", " + z);
-               removeComboFromBoard(z, i, arr, o.color);
-            }
-            System.out.println("x = " + z);
+            removeComboFromBoard(z, i, arr, o.color);
          }
-         System.out.println("y = " + i);
       }
-      wipeCombosFromBoard(arr);
+      combos = wipeCombosFromBoard(arr);
       System.out.println("After removing: ");
       for(int a = 0; a < Y; a++){
          for(int b = 0; b < X; b++)
             System.out.print(arr[a][b]);
          System.out.println();
       }
+      System.out.println("combos amount : " + combos);
       return combos;
    }
 
@@ -177,59 +168,86 @@ public class PADSolver {
     * @param orig, only for its color
     */
    public void removeComboFromBoard(int x, int y, Orb[][] arr, int color) {
-      if((y > Y-1 || y < 0) || (x > X-1 || x < 0)){
+      //check for cases
+      if((y > Y-1 || y < 0) || (x > X-1 || x < 0) || arr[y][x] == null){
          return;
       }
-      
-      if(arr[y][x] != null && color == arr[y][x].color){
+      boolean flag = (isHorizontalCombo(x, y, arr) || isVerticalCombo(x, y, arr));
+      if(flag && !arr[y][x].delete)
          arr[y][x].delete = true;
-      }
       else
          return;
-      
-      int horCount = 0;
-      int verCount = 0;
-      
-      for (int j = 1; ((x+j) < X && arr[y][x+j] != null) && color == arr[y][x + j].color; j++)
-         horCount++;
-      // scan left
-      for (int j = -1; ((x+j) >= 0 && arr[y][x+j] != null) && color == arr[y][x + j].color; j--)
-         horCount++;
-      for (int j = 1; ((y+j) < Y && arr[y+j][x] != null) && color == arr[y + j][x].color; j++)
-         verCount++;
-      for (int j = -1; ((y+j) >= 0 && arr[y+j][x] != null) && color == arr[y + j][x].color; j--)
-         verCount++;
-      
-      if (horCount > 2) {
-         if (x < (X-2) && !arr[y][x+1].delete)
+      if(isHorizontalCombo(x, y, arr)){
+         flag = true;
             removeComboFromBoard(x+1, y, arr, color);
-         if (x > 0 && !arr[y][x-1].delete)
             removeComboFromBoard(x-1, y, arr, color);
       }
-      if(verCount > 2) {
-         if (y < (Y-2) && !arr[y+1][x].delete)
+      if(isVerticalCombo(x, y, arr)){
+         flag = true;
             removeComboFromBoard(x, y+1, arr, color);
-         if (y > 0 && !arr[y-1][x].delete)
             removeComboFromBoard(x, y-1, arr, color);
       }
-      
+   }
+   public boolean isHorizontalCombo(int x, int y, Orb[][] arr){
+      int horCount = 0;
+      for (int j = 1; ((x+j) < X && arr[y][x+j] != null) && arr[y][x].color == arr[y][x + j].color; j++)
+         horCount++;
+      // scan left
+      for (int j = -1; ((x+j) >= 0 && arr[y][x+j] != null) && arr[y][x].color == arr[y][x + j].color; j--)
+         horCount++;
+      if(horCount >= 2)
+         return true;
+      else
+         return false;
    }
    
-   public void wipeCombosFromBoard(Orb[][] arr){
+   public boolean isVerticalCombo(int x, int y, Orb[][] arr){
+      int verCount = 0;
+      for (int j = 1; ((y+j) < Y && arr[y+j][x] != null) && arr[y][x].color == arr[y + j][x].color; j++)
+         verCount++;
+      for (int j = -1; ((y+j) >= 0 && arr[y+j][x] != null) && arr[y][x].color == arr[y + j][x].color; j--)
+         verCount++;
+      if(verCount >= 2)
+         return true;
+      else
+         return false;
+   }
+   
+   //run through the board the remove combos which have been marked for deletion
+   public int wipeCombosFromBoard(Orb[][] arr){
+      int combos = 0;
       for(int j = 0; j < Y; j++)
          for(int i = 0; i < X; i++)
-            if(arr[j][i].delete)
-               arr[j][i] = null;
+            if(arr[j][i] != null && arr[j][i].delete){
+               deleteCountCombo(j, i, arr, arr[j][i].color);
+               combos++;
+            }
+      return combos;
    }
-
+   public void deleteCountCombo(int y, int x, Orb[][] arr, int color){
+      if(((y > Y-1 || y < 0) || (x > X-1 || x < 0)) || (arr[y][x] == null || arr[y][x].color != color)){
+         return;
+      }
+      arr[y][x] = null;
+      if((y < Y-1 && arr[y+1][x] != null) && (arr[y+1][x].color == color && arr[y+1][x].delete))//means we need to delete
+         deleteCountCombo(y+1, x, arr, color);
+      if((y > 0 && arr[y-1][x] != null) && (arr[y-1][x].color == color &&arr[y-1][x].delete))
+         deleteCountCombo(y-1, x, arr, color);
+      if((x < X-1 && arr[y][x+1] != null) && (arr[y][x+1].color == color &&arr[y][x+1].delete))
+         deleteCountCombo(y, x+1, arr, color);
+      if((x > 0 && arr[y][x-1] != null) && (arr[y][x-1].color == color &&arr[y][x-1].delete))
+         deleteCountCombo(y, x-1, arr, color);
+      
+      
+   }
    public boolean skyFall(Orb[][] arr) {
       boolean flag = false;
-      int rowU, rowD;
+      int rowD;
       // Y-2 because there are no gaps beneath
       for (int i = Y - 2; i >= 0; i--) {
          for (int j = X - 1; j >= 0; j--) {
             Orb orb = arr[i][j];
-            rowU = rowD = i;
+            rowD = i;
             if(orb == null)
                continue;
             
@@ -262,7 +280,7 @@ public class PADSolver {
       }
       return list;
    }
-
+   //populates a 2D array given an arraylist of arraylists
    public static Orb[][] populateArray(ArrayList<ArrayList<Orb>> list) {
       Orb[][] arr = new Orb[Y][X];
       for (int i = 0; i < Y; i++)
@@ -270,7 +288,7 @@ public class PADSolver {
             arr[i][j] = list.get(i).get(j);
       return arr;
    }
-
+   //swaps two orbs given both x-y positions
    public static void swap(int y1, int x1, int y2, int x2, Orb[][] arr) {
       Orb temp, o1, o2;
       temp = o1 = arr[y1][x1];
