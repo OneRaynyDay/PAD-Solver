@@ -33,7 +33,7 @@ public class PADSolver {
             // Will run into null pointers in the future
             if (array[i][j] == null)
                throw new IllegalArgumentException();
-      mArr = array;
+      mArr = array; //master array?
       map = new HashMap<ArrayList<ArrayList<Orb>>, String>();
    }
 
@@ -43,17 +43,19 @@ public class PADSolver {
    public void findSolutions(int numOfMoves) {
       int maxCombos = 0;
       ArrayList<ArrayList<Orb>> maxSequence = null;
-      for (int i = 0; i < Y; i++)
-         for (int j = 0; j < X; j++)
+      for (int i = 0; i < Y; i++){
+         for (int j = 0; j < X; j++){
             // populates hashmap
             findPath(j, i, new Orb[Y][X], numOfMoves, j, i,
                   "Y " + i + "X " + j + "|");
+         }
+      }
       for (Map.Entry<ArrayList<ArrayList<Orb>>, String> entry : map.entrySet()) {
          // loops through each possibility w/ minimal moves
          Orb[][] sequence = mergeArrs(populateArray(entry.getKey()));
          int combos = 0;
 
-         while (true) {
+         while (true) { //counts the number of combos 
             combos += countCombos(sequence); // gives blank map to fill in
             if (!skyFall(sequence)) // means there are skyfalls
                break;
@@ -72,6 +74,13 @@ public class PADSolver {
 
    /**
     * recursively populating using heuristics and path finding
+    * @param int x - current column position
+    * @param int y - current row position
+    * @param Orb [][] arr - current board
+    * @param int counter - number of moves remaining
+    * @param int prevX - previous column position
+    * @param int prevY - previous row position 
+    * @param String dir - keeps track of orb path
     */
    public void findPath(int x, int y, Orb[][] arr, int counter, int prevX, int prevY,
          String dir) {
@@ -80,15 +89,16 @@ public class PADSolver {
          return;
       }
       
+      //makes necessary changes to the board after each iteration
       arr[y][x] = (arr[y][x] != null) ? arr[y][x] : (Orb) mArr[y][x].clone();
       int nextY = y, nextX = x;
       swap(nextY, nextX, prevY, prevX, arr);
       prevY = nextY;
       prevX = nextX;
 
-      counter--;
+      counter--; //decrements the number of moves left
       if (y > 0) // can go up
-         findPath(x, y - 1, arr, counter, prevX, prevY , dir + "U");
+         findPath(x, y - 1, arr, counter, prevX, prevY, dir + "U");
       if (x > 0) // can go left
          findPath(x - 1, y, arr, counter, prevX, prevY, dir + "L");
       if (y < Y-1)
@@ -108,7 +118,8 @@ public class PADSolver {
       if (map.get(list) != null && (map.get(list).length() > dir.length()))
          map.put(list, dir);
    }
-
+   
+   //updates the master array
    public Orb[][] mergeArrs(Orb[][] arr) {
       Orb[][] newArr = new Orb[Y][X];
       for (int i = 0; i < Y; i++) {
@@ -126,28 +137,31 @@ public class PADSolver {
 
    /**
     * precondition: array has all cells complete
-    * 
+    * @param Orb[][] arr - current board state to analyze for combos
     * @return
     */
    public int countCombos(Orb[][] arr) {
       int combos = 0;
-      for (int i = 0; i < Y; i++) {
-         for (int z = 0; z < X; z++) {
+      for (int i = 0; i < Y; i++) { //rows
+         for (int z = 0; z < X; z++) { //columns
             Orb o = arr[i][z];
-            int horCount = 0;
+            int horCount = 0; //at least 3 of either horCount or verCount to have a "combo"
             int verCount = 0;
             
             if(o == null || o.delete)
                continue;
             
+            //Look for adjacent orbs of identical color in 4 directions (right,left,down,up)
             // scan right
             for (int j = 1; ((z+j) < X && arr[i][z+j] != null) && o.color == arr[i][z + j].color; j++)
                horCount++;
             // scan left
             for (int j = -1; ((z+j) >= 0 && arr[i][z+j] != null) && o.color == arr[i][z + j].color; j--)
                horCount++;
+            //scan down
             for (int j = 1; ((i+j) < Y && arr[i+j][z] != null) && o.color == arr[i + j][z].color; j++)
                verCount++;
+            //scan up
             for (int j = -1; ((i+j) >= 0 && arr[i+j][z] != null) && o.color == arr[i + j][z].color; j--)
                verCount++;
 
@@ -190,6 +204,7 @@ public class PADSolver {
       int horCount = 0;
       int verCount = 0;
       
+      //repeated code from countCombos method?
       for (int j = 1; ((x+j) < X && arr[y][x+j] != null) && color == arr[y][x + j].color; j++)
          horCount++;
       // scan left
@@ -200,6 +215,7 @@ public class PADSolver {
       for (int j = -1; ((y+j) >= 0 && arr[y+j][x] != null) && color == arr[y + j][x].color; j--)
          verCount++;
       
+      //recursively go through each orb in the combo and remove them
       if (horCount > 2) {
          if (x < (X-2) && !arr[y][x+1].delete)
             removeComboFromBoard(x+1, y, arr, color);
@@ -215,6 +231,7 @@ public class PADSolver {
       
    }
    
+   //run through the board the remove combos which have been marked for deletion
    public void wipeCombosFromBoard(Orb[][] arr){
       for(int j = 0; j < Y; j++)
          for(int i = 0; i < X; i++)
@@ -252,7 +269,7 @@ public class PADSolver {
             return false;
       return true;
    }
-
+   //populates an arraylist of arraylists given a 2D array
    public static ArrayList<ArrayList<Orb>> populateList(Orb[][] arr) {
       ArrayList<ArrayList<Orb>> list = new ArrayList<ArrayList<Orb>>();
       for (int i = 0; i < Y; i++){
@@ -262,7 +279,7 @@ public class PADSolver {
       }
       return list;
    }
-
+   //populates a 2D array given an arraylist of arraylists
    public static Orb[][] populateArray(ArrayList<ArrayList<Orb>> list) {
       Orb[][] arr = new Orb[Y][X];
       for (int i = 0; i < Y; i++)
@@ -270,7 +287,7 @@ public class PADSolver {
             arr[i][j] = list.get(i).get(j);
       return arr;
    }
-
+   //swaps two orbs given both x-y positions
    public static void swap(int y1, int x1, int y2, int x2, Orb[][] arr) {
       Orb temp, o1, o2;
       temp = o1 = arr[y1][x1];

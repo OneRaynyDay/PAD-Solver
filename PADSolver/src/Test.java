@@ -15,9 +15,10 @@ public class Test {
       }
       //print the original random board
       for(int i = 0; i < y; i++){
-         for(int j = 0; j < x; j++)
+         for(int j = 0; j < x; j++){
             System.out.print(arr[i][j]);
-         //System.out.println();
+         }
+         System.out.println(); //easier to visualize to prints
       }
       
       PADSolver padsolver = new PADSolver(arr, x, y);
