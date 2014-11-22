@@ -48,6 +48,7 @@ public class BoardFinder {
 			System.out.println();
 		}
 		showData();
+		fillBoard();
 	}
 	public static void showData(){
 		JFrame frame = new JFrame("What Computer Sees (don't worry about cutoff)");
@@ -72,5 +73,8 @@ public class BoardFinder {
 		frame.add(pane);
 		frame.pack();
 		frame.setVisible(true);
+	}
+	public static void fillBoard(){
+		//take the array of pixels and somehow generate a 5x6 board of color-coded orbs
 	}
 }
