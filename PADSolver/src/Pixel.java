@@ -18,14 +18,17 @@ public class Pixel {
 		green = color.getGreen();
 	}
 	//methods to return RGB values of the pixel
-	public int getRED(){
+	public int getRed(){
 		return red;
 	}
-	public int getBLUE(){
+	public int getBlue(){
 		return blue;
 	}
-	public int getGREEN(){
+	public int getGreen(){
 		return green;
+	}
+	public Color getColor(){
+		return color;
 	}
 	public String toString(){
 		return "(" + red+"," + green + "," + blue + ")";
