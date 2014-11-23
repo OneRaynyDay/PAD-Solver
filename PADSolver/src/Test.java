@@ -29,7 +29,7 @@ public class Test {
          }
          System.out.println();
       }
-      PADSolver padsolver = new PADSolver("DBGLLLBDBBRGGBDLDLRGBDLLRRGDRG", x, y);
+      PADSolver padsolver = new PADSolver("GRBDHRRBRRDRGGLDHGRDGDDLLDBRLG", x, y);
       padsolver.findSolutions(9);
       /*int combos = 0;
       for(int b = 0; b < 100; b++){

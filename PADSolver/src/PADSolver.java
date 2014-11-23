@@ -2,6 +2,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class PADSolver {
    /**
@@ -15,7 +19,7 @@ public class PADSolver {
    public Orb[][] mArr;
    // map that includes path and starting position
    // use regex to extract String directions
-   private HashMap<ArrayList<ArrayList<Orb>>, String> map;
+   private ConcurrentHashMap<ArrayList<ArrayList<Orb>>, String> map;
 
    /**
     * 
@@ -36,7 +40,7 @@ public class PADSolver {
                throw new IllegalArgumentException(); // comment out if need
                                                      // testing
       mArr = array; // master array?
-      map = new HashMap<ArrayList<ArrayList<Orb>>, String>();
+      map = new ConcurrentHashMap<ArrayList<ArrayList<Orb>>, String>();
    }
 
    public PADSolver(String sequence, int x, int y) {
@@ -72,28 +76,97 @@ public class PADSolver {
             if (color.equals("H"))
                mArr[i][j] = new Orb(7);
          }
-      map = new HashMap<ArrayList<ArrayList<Orb>>, String>();
+      map = new ConcurrentHashMap<ArrayList<ArrayList<Orb>>, String>();
    }
 
    /**
     * driver method
     */
-   class solutionPopulator implements Runnable
+   class SolutionPopulator implements Runnable
    {
-      @Override
-      public void run() {
-         
+      int x, y, counter;
+      Orb[][] arr;
+      CountDownLatch latch = null;
+      ConcurrentHashMap<ArrayList<ArrayList<Orb>>, String> map;
+      
+      public SolutionPopulator(int xPos, int yPos, Orb[][] nArr, int counter, CountDownLatch latch, ConcurrentHashMap<ArrayList<ArrayList<Orb>>, String> pMap){
+         x = xPos;
+         y = yPos;
+         arr = nArr;
+         this.counter = counter;
+         this.latch = latch;
+         map = pMap;
       }
       
+      @Override
+      public void run() {
+         findPath(x, y, arr, counter, x, y, "Y: " + y + " X: " + x);
+         latch.countDown();
+      }
+      /**
+       * recursively populating using heuristics and path finding
+       * 
+       * @param int x - current column position
+       * @param int y - current row position
+       * @param Orb
+       *           [][] arr - current board
+       * @param int counter - number of moves remaining
+       * @param int prevX - previous column position
+       * @param int prevY - previous row position
+       * @param String
+       *           dir - keeps track of orb path
+       */
+      public void findPath(int x, int y, Orb[][] nArr, int counter, int prevX,
+            int prevY, String dir){
+         Orb[][] arr = new Orb[nArr.length][];
+         for (int i = 0; i < nArr.length; i++) {
+            Orb[] array = nArr[i];
+            int aLength = array.length;
+            arr[i] = new Orb[aLength];
+            System.arraycopy(array, 0, arr[i], 0, aLength);
+         }
+         swap(prevY, prevX, y, x, arr);
+         int yDiff = y - prevY;
+         int xDiff = x - prevX;
+         prevY = y;
+         prevX = x;
+         counter--;
+         if (map.get(populateList(mergeArrs(arr))) != null) {
+            if (dir.length() < map.get(populateList(mergeArrs(arr))).length()) { 
+               map.put(populateList(mergeArrs(arr)), dir);
+            }
+         } else {
+            map.put(populateList(mergeArrs(arr)), dir);
+         }
+         if (counter == -1)
+            return;
+
+         if (y > 0 && yDiff != 1) // can go up
+            findPath(x, y - 1, arr, counter, prevX, prevY, dir + "U");
+         if (x > 0 && xDiff != 1) // can go left
+            findPath(x - 1, y, arr, counter, prevX, prevY, dir + "L");
+         if (y < Y - 1 && yDiff != -1)
+            findPath(x, y + 1, arr, counter, prevX, prevY, dir + "D");
+         if (x < X - 1 && xDiff != -1)
+            findPath(x + 1, y, arr, counter, prevX, prevY, dir + "R");
+      }
    }
    public void findSolutions(int numOfMoves) {
       int maxCombos = 0;
       ArrayList<ArrayList<Orb>> maxSequence = null;
+      CountDownLatch latch = new CountDownLatch(X*Y);
+      ExecutorService pool = Executors.newCachedThreadPool();
       for (int i = 0; i < Y; i++) {
          for (int j = 0; j < X; j++) {
             // populates hashmap
-            findPath(j, i, mArr, numOfMoves, j, i, "Y " + i + "X " + j + "|");
+            SolutionPopulator populator = new SolutionPopulator(j, i, mArr, numOfMoves, latch, map);
+            pool.submit(populator);
          }
+      }
+      try {//waits for all threads to complete
+         latch.await();
+      } catch (InterruptedException e) {
+         e.printStackTrace();
       }
 
       Set<ArrayList<ArrayList<Orb>>> keys = map.keySet();
@@ -132,53 +205,7 @@ public class PADSolver {
             + " with pattern : " + map.get(maxSequence));
    }
 
-   /**
-    * recursively populating using heuristics and path finding
-    * 
-    * @param int x - current column position
-    * @param int y - current row position
-    * @param Orb
-    *           [][] arr - current board
-    * @param int counter - number of moves remaining
-    * @param int prevX - previous column position
-    * @param int prevY - previous row position
-    * @param String
-    *           dir - keeps track of orb path
-    */
-   public void findPath(int x, int y, Orb[][] nArr, int counter, int prevX,
-         int prevY, String dir){
-      Orb[][] arr = new Orb[nArr.length][];
-      for (int i = 0; i < nArr.length; i++) {
-         Orb[] array = nArr[i];
-         int aLength = array.length;
-         arr[i] = new Orb[aLength];
-         System.arraycopy(array, 0, arr[i], 0, aLength);
-      }
-      swap(prevY, prevX, y, x, arr);
-      int yDiff = y - prevY;
-      int xDiff = x - prevX;
-      prevY = y;
-      prevX = x;
-      counter--;
-      if (map.get(populateList(mergeArrs(arr))) != null) {
-         if (dir.length() < map.get(populateList(mergeArrs(arr))).length()) { 
-            map.put(populateList(mergeArrs(arr)), dir);
-         }
-      } else {
-         map.put(populateList(mergeArrs(arr)), dir);
-      }
-      if (counter == -1)
-         return;
-
-      if (y > 0 && yDiff != 1) // can go up
-         findPath(x, y - 1, arr, counter, prevX, prevY, dir + "U");
-      if (x > 0 && xDiff != 1) // can go left
-         findPath(x - 1, y, arr, counter, prevX, prevY, dir + "L");
-      if (y < Y - 1 && yDiff != -1)
-         findPath(x, y + 1, arr, counter, prevX, prevY, dir + "D");
-      if (x < X - 1 && xDiff != -1)
-         findPath(x + 1, y, arr, counter, prevX, prevY, dir + "R");
-   }
+   
 
    // updates the master array
    public Orb[][] mergeArrs(Orb[][] arr){
