@@ -93,5 +93,11 @@ public class BoardFinder {
 	}
 	public static void fillBoard(){
 		//take the array of pixels and somehow generate a 5x6 board of color-coded orbs
+		
+		/*
+		 * Analyze each region and average all RGB values to come up with one single Color
+		 * match that color to an orb type
+		 * then populate the array
+		 * */
 	}
 }
