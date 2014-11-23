@@ -1,14 +1,17 @@
+import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Locale;
 
 
 public class Test {
+   public static NumberFormat tidy = NumberFormat.getInstance(Locale.US);
    public static void main(String[] args){
       ArrayList<Orb[][]> list = new ArrayList<Orb[][]>();
       int x = 6;
       int y = 5;
       
       //Creates a randomly generated board
-      for(int a = 0; a < 100; a++){
+      /*for(int a = 0; a < 100; a++){
          Orb[][] orbArray = new Orb[5][6];
          for(int i = 0; i < y ; i++){
             for(int j = 0; j < x; j++){
@@ -28,9 +31,15 @@ public class Test {
             //System.out.println();
          }
          System.out.println();
-      }
-      PADSolver padsolver = new PADSolver("GRBDHRRBRRDRGGLDHGRDGDDLLDBRLG", x, y);
-      padsolver.findSolutions(9);
+      }*/
+      long startTime, stopTime;
+      startTime = System.nanoTime();
+      PADSolver padsolver = new PADSolver("LBHRLBHRRGRRBDHHGRHRHDRGDDLHDL", x, y);
+      padsolver.findSolutions(10);
+      stopTime = System.nanoTime();
+      System.out.println(tidy.format((stopTime - startTime) / 1e9) + " seconds.");
+      
+      
       /*int combos = 0;
       for(int b = 0; b < 100; b++){
          combos = 0;

@@ -13,7 +13,8 @@ public class PADSolver {
     */
    private static double SINGLE_ADD = 0.25;
    private static double COMBO_MULT = 0.25;
-
+   public static int THRESHOLD_MOVES;
+   public static int THRESHOLD_COMBOS;
    private static int X;
    private static int Y;
    public Orb[][] mArr;
@@ -88,6 +89,7 @@ public class PADSolver {
       Orb[][] arr;
       CountDownLatch latch = null;
       ConcurrentHashMap<ArrayList<ArrayList<Orb>>, String> map;
+      ConcurrentHashMap<ArrayList<ArrayList<Orb>>, String> myMap;
       
       public SolutionPopulator(int xPos, int yPos, Orb[][] nArr, int counter, CountDownLatch latch, ConcurrentHashMap<ArrayList<ArrayList<Orb>>, String> pMap){
          x = xPos;
@@ -96,11 +98,23 @@ public class PADSolver {
          this.counter = counter;
          this.latch = latch;
          map = pMap;
+         myMap = new ConcurrentHashMap<ArrayList<ArrayList<Orb>>, String>();
       }
       
       @Override
       public void run() {
-         findPath(x, y, arr, counter, x, y, "Y: " + y + " X: " + x);
+         if(counter > THRESHOLD_MOVES){//preliminary test
+            findPath(x, y, arr, THRESHOLD_MOVES, x, y, "Y: " + y + " X: " + x, true);
+            int maxCombo = processCombos(myMap);
+            System.out.println("The moves are over " + THRESHOLD_MOVES + ", so therefore max combo @ " + THRESHOLD_MOVES + " is " + maxCombo);
+            if(maxCombo < THRESHOLD_COMBOS){
+               latch.countDown();
+               System.out.println("thread at y : " + y + " x : " + x + " died :(");
+               return;
+            }
+         }
+         System.out.println("Starting to actually find path");
+         findPath(x, y, arr, counter, x, y, "Y: " + y + " X: " + x, false);
          latch.countDown();
       }
       /**
@@ -117,7 +131,7 @@ public class PADSolver {
        *           dir - keeps track of orb path
        */
       public void findPath(int x, int y, Orb[][] nArr, int counter, int prevX,
-            int prevY, String dir){
+            int prevY, String dir, boolean testing){
          Orb[][] arr = new Orb[nArr.length][];
          for (int i = 0; i < nArr.length; i++) {
             Orb[] array = nArr[i];
@@ -131,31 +145,42 @@ public class PADSolver {
          prevY = y;
          prevX = x;
          counter--;
-         if (map.get(populateList(mergeArrs(arr))) != null) {
-            if (dir.length() < map.get(populateList(mergeArrs(arr))).length()) { 
+         if(testing){
+            if (myMap.get(populateList(mergeArrs(arr))) != null) {
+               if (dir.length() < myMap.get(populateList(mergeArrs(arr))).length()) { 
+                  myMap.put(populateList(mergeArrs(arr)), dir);
+               }
+            } else {
+               myMap.put(populateList(mergeArrs(arr)), dir);
+            }
+         }
+         else{
+            if (map.get(populateList(mergeArrs(arr))) != null) {
+               if (dir.length() < map.get(populateList(mergeArrs(arr))).length()) { 
+                  map.put(populateList(mergeArrs(arr)), dir);
+               }
+            } else {
                map.put(populateList(mergeArrs(arr)), dir);
             }
-         } else {
-            map.put(populateList(mergeArrs(arr)), dir);
          }
          if (counter == -1)
             return;
 
          if (y > 0 && yDiff != 1) // can go up
-            findPath(x, y - 1, arr, counter, prevX, prevY, dir + "U");
+            findPath(x, y - 1, arr, counter, prevX, prevY, dir + "U", testing);
          if (x > 0 && xDiff != 1) // can go left
-            findPath(x - 1, y, arr, counter, prevX, prevY, dir + "L");
+            findPath(x - 1, y, arr, counter, prevX, prevY, dir + "L", testing);
          if (y < Y - 1 && yDiff != -1)
-            findPath(x, y + 1, arr, counter, prevX, prevY, dir + "D");
+            findPath(x, y + 1, arr, counter, prevX, prevY, dir + "D", testing);
          if (x < X - 1 && xDiff != -1)
-            findPath(x + 1, y, arr, counter, prevX, prevY, dir + "R");
+            findPath(x + 1, y, arr, counter, prevX, prevY, dir + "R", testing);
       }
    }
    public void findSolutions(int numOfMoves) {
-      int maxCombos = 0;
-      ArrayList<ArrayList<Orb>> maxSequence = null;
       CountDownLatch latch = new CountDownLatch(X*Y);
       ExecutorService pool = Executors.newCachedThreadPool();
+      THRESHOLD_MOVES = numOfMoves - 3;
+      THRESHOLD_COMBOS = numOfMoves/3 + 1;
       for (int i = 0; i < Y; i++) {
          for (int j = 0; j < X; j++) {
             // populates hashmap
@@ -168,7 +193,14 @@ public class PADSolver {
       } catch (InterruptedException e) {
          e.printStackTrace();
       }
-
+      System.out.println("CountdownLatch opened");
+      processCombos(map);
+   }
+   
+   //overloaded
+   public synchronized int processCombos(ConcurrentHashMap<ArrayList<ArrayList<Orb>>, String> map){
+      int maxCombos = 0;
+      ArrayList<ArrayList<Orb>> maxSequence = null;
       Set<ArrayList<ArrayList<Orb>>> keys = map.keySet();
       for (ArrayList<ArrayList<Orb>> key : keys) {
          int combos = 0;
@@ -196,15 +228,28 @@ public class PADSolver {
             maxSequence = key;
             maxCombos = combos;
          }
+//         if (combos > maxCombos) {
+//            maxSequence = key;
+//            maxCombos = combos;
+//         }
+//         else if(combos == maxCombos){
+//            if(map.get(maxSequence).length() > map.get(key).length())
+//               maxSequence = key;
+//         }
+
       }
       /**
        * stub needs modification - gives simple result for now
        */
-
-      System.out.println("The best result is : " + maxCombos
-            + " with pattern : " + map.get(maxSequence));
+      try{
+         System.out.println("The best result is : " + maxCombos
+               + " with pattern : " + map.get(maxSequence));
+      }
+      catch(NullPointerException e){
+         System.out.println("No real solution");
+      }
+      return maxCombos;
    }
-
    
 
    // updates the master array
