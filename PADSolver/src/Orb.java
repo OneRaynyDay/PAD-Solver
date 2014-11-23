@@ -9,6 +9,8 @@ public class Orb implements Cloneable{
    public final static int P = 5;
    //blocker orb
    public final static int X = 6;
+   //heart orb
+   public final static int H = 7;
    public boolean delete;
    public int color;
    
@@ -18,13 +20,8 @@ public class Orb implements Cloneable{
       delete = false;
    }
    
-   public Object clone(){
-      try {
-         return (Object)super.clone();
-      } catch (CloneNotSupportedException e) {
-         e.printStackTrace();
-      }
-      return null;
+   public Object clone() throws CloneNotSupportedException{
+      return (Object)super.clone();
    }
    
    //Prints colors of the orbs
@@ -43,6 +40,8 @@ public class Orb implements Cloneable{
          return "P";
       if(color == 6)
          return "X";
+      if(color == 7)
+         return "H";
       return "Not initialized with a color";
    }
 }
