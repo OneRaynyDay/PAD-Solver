@@ -1,4 +1,7 @@
 PAD-Solver
 ==========
 
-Tupac is dead
+-Supports multithreading
+-Uses recursively populating possibilities
+-maximizes game tree efficiency using pruning
+-dynamically programs and holds data using hashtable cache
